@@ -1,62 +1,71 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:personal_tasks/components/difficult.dart';
+import 'package:personal_tasks/components/difficulty.dart';
 
 class Task extends StatefulWidget {
+  final int id;
   final String name;
-  final int difficult;
+  final int difficultyLevel;
   final String imageUrl;
 
-  const Task(this.name, this.difficult, this.imageUrl, {super.key});
+  Task(this.id, this.name, this.difficultyLevel, this.imageUrl, {super.key});
+
+  int level = 0;
+  int maxLevel = 10;
 
   @override
   State<Task> createState() => _TaskState();
 }
 
 class _TaskState extends State<Task> {
-  int level = 0;
-  int maxLevel = 10;
 
   void incrementLevel() {
     setState(() {
-      level++;
+      widget.level++;
     });
   }
 
-  double getLevelScale()
-  {
-    return (level / max(widget.difficult, 1)) / maxLevel;
+  bool isNetworkImage(String source) {
+    return source.contains("http");
+  }
+
+  double getLevelScale() {
+    return (widget.level / max(widget.difficultyLevel, 1)) / widget.maxLevel;
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
       child: Container(
         decoration: const BoxDecoration(
           boxShadow: [
             BoxShadow(
-                color: Colors.black26, offset: Offset(0, 5), blurRadius: 5)
+                color: Colors.black26,
+                offset: Offset(0.0, 5.0),
+                spreadRadius: 1.0,
+                blurRadius: 5.0)
           ],
         ),
         child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10.0),
             child: Stack(
               children: [
                 Container(
                   color: Colors.black54,
                   width: 400,
-                  height: 150,
+                  height: 140,
                 ),
                 Column(
                   children: [
                     Container(
                       color: Colors.white,
                       width: 400,
-                      height: 110,
+                      height: 100,
                       child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -64,11 +73,13 @@ class _TaskState extends State<Task> {
                               borderRadius: BorderRadius.circular(25),
                               child: Container(
                                 color: Colors.black12,
-                                width: 90,
-                                height: 90,
-                                child: Image.asset(
-                                    widget.imageUrl,
-                                    fit: BoxFit.cover),
+                                width: 80,
+                                height: 80,
+                                child: isNetworkImage(widget.imageUrl)
+                                    ? Image.network(widget.imageUrl,
+                                        fit: BoxFit.cover)
+                                    : Image.asset(widget.imageUrl,
+                                        fit: BoxFit.cover),
                               ),
                             ),
                             Column(
@@ -76,14 +87,14 @@ class _TaskState extends State<Task> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(
-                                    width: 150,
+                                    width: 120,
                                     child: Text(
                                       widget.name,
                                       style: const TextStyle(
-                                          fontSize: 20,
+                                          fontSize: 18,
                                           overflow: TextOverflow.ellipsis),
                                     )),
-                                Difficult(difficultValue: widget.difficult)
+                                Difficulty(difficultyValue: widget.difficultyLevel)
                               ],
                             ),
                             SizedBox(
@@ -116,8 +127,9 @@ class _TaskState extends State<Task> {
                                 value: getLevelScale(),
                               )),
                           Text(
-                            "Level $level",
-                            style: const TextStyle(color: Colors.white, fontSize: 18),
+                            "Level ${widget.level}",
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 18),
                           ),
                         ],
                       ),

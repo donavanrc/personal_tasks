@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:personal_tasks/data/inherited_task.dart';
 import 'package:personal_tasks/screens/home.dart';
 
 void main() {
@@ -16,7 +17,7 @@ class MainApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const Home(),
+      home: InheritedTask(child: const Home()),
     );
   }
 }
