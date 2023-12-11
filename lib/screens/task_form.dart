@@ -1,29 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:personal_tasks/data/inherited_task.dart';
+import 'package:personal_tasks/Models/task.dart';
+import 'package:personal_tasks/data/task_dao.dart';
 
-class NewTask extends StatefulWidget {
-  const NewTask({super.key, required this.taskContext});
+class TaskForm extends StatefulWidget {
+  final Task? task;
 
-  final BuildContext taskContext;
+  const TaskForm({super.key, this.task});
 
   @override
-  State<NewTask> createState() => _NewTaskState();
+  State<TaskForm> createState() => _TaskFormState();
 }
 
-class _NewTaskState extends State<NewTask> {
+class _TaskFormState extends State<TaskForm> {
   TextEditingController nameController = TextEditingController();
   TextEditingController difficultyController = TextEditingController();
   TextEditingController imageController = TextEditingController();
 
   final formKey = GlobalKey<FormState>();
 
-  bool valueValidator(String? value){
+  bool isEditMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isEditMode = widget.task != null;
+    if (isEditMode) {
+      nameController = TextEditingController(text: widget.task!.name);
+      difficultyController =
+          TextEditingController(text: widget.task!.difficultyLevel.toString());
+      imageController = TextEditingController(text: widget.task!.imageUrl);
+    }
+  }
+
+  bool valueValidator(String? value) {
     return value != null && value.isEmpty;
   }
 
-  bool valueRange(int value, int min, int max)
-  {
+  bool valueRange(int value, int min, int max) {
     return value < min || value > max;
+  }
+
+  void save() {
+    if (formKey.currentState!.validate()) {
+      Task task = Task(
+          name: nameController.text,
+          difficultyLevel: int.parse(difficultyController.text),
+          imageUrl: imageController.text);
+
+      if (isEditMode) {
+        TaskDao().updateOne(widget.task!.id!, task);
+      } else {
+        TaskDao().save(task);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isEditMode ? "Task was updated" : "Task was created"),
+          backgroundColor: Colors.lightGreen,
+        ),
+      );
+
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -32,7 +70,7 @@ class _NewTaskState extends State<NewTask> {
       key: formKey,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("New Task"),
+          title: Text(isEditMode ? "Edit Task" : "New Task"),
         ),
         body: Container(
           color: Colors.black12,
@@ -75,7 +113,8 @@ class _NewTaskState extends State<NewTask> {
                           horizontal: 32.0, vertical: 16),
                       child: TextFormField(
                         validator: (String? value) {
-                          if (valueValidator(value) || valueRange(int.parse(value!), 1, 5)) {
+                          if (valueValidator(value) ||
+                              valueRange(int.parse(value!), 1, 5)) {
                             return "Difficulty Level must be range from 1 to 5";
                           }
                           return null;
@@ -135,25 +174,7 @@ class _NewTaskState extends State<NewTask> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32.0, vertical: 16),
                       child: ElevatedButton(
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-
-                              InheritedTask.of(widget.taskContext).addTask(
-                                  nameController.text,
-                                  int.parse(difficultyController.text),
-                                  imageController.text);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Task was created"),
-                                  backgroundColor: Colors.lightGreen,
-                                ),
-                              );
-
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: const Text("Add Task")),
+                          onPressed: save, child: const Text("Save")),
                     )
                   ],
                 ),

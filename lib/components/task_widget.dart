@@ -1,25 +1,24 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:personal_tasks/components/difficulty.dart';
+import 'package:personal_tasks/Models/task.dart';
+import 'package:personal_tasks/components/difficulty_widget.dart';
+import 'package:personal_tasks/data/task_dao.dart';
 
-class Task extends StatefulWidget {
-  final int id;
-  final String name;
-  final int difficultyLevel;
-  final String imageUrl;
+class TaskWidget extends StatefulWidget {
+  Task task;
+  final VoidCallback onTaskDeleted;
 
-  Task(this.id, this.name, this.difficultyLevel, this.imageUrl, {super.key});
+  TaskWidget({required this.task, required this.onTaskDeleted, super.key});
 
   int level = 0;
   int maxLevel = 10;
 
   @override
-  State<Task> createState() => _TaskState();
+  State<TaskWidget> createState() => _TaskWidgetState();
 }
 
-class _TaskState extends State<Task> {
-
+class _TaskWidgetState extends State<TaskWidget> {
   void incrementLevel() {
     setState(() {
       widget.level++;
@@ -31,7 +30,7 @@ class _TaskState extends State<Task> {
   }
 
   double getLevelScale() {
-    return (widget.level / max(widget.difficultyLevel, 1)) / widget.maxLevel;
+    return (widget.level / max(widget.task.difficultyLevel, 1)) / widget.maxLevel;
   }
 
   @override
@@ -55,14 +54,14 @@ class _TaskState extends State<Task> {
                 Container(
                   color: Colors.black54,
                   width: 400,
-                  height: 140,
+                  height: 134,
                 ),
                 Column(
                   children: [
                     Container(
                       color: Colors.white,
                       width: 400,
-                      height: 100,
+                      height: 90,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 8.0, horizontal: 16.0),
@@ -75,10 +74,10 @@ class _TaskState extends State<Task> {
                                 color: Colors.black12,
                                 width: 80,
                                 height: 80,
-                                child: isNetworkImage(widget.imageUrl)
-                                    ? Image.network(widget.imageUrl,
+                                child: isNetworkImage(widget.task.imageUrl)
+                                    ? Image.network(widget.task.imageUrl,
                                         fit: BoxFit.cover)
-                                    : Image.asset(widget.imageUrl,
+                                    : Image.asset(widget.task.imageUrl,
                                         fit: BoxFit.cover),
                               ),
                             ),
@@ -89,12 +88,13 @@ class _TaskState extends State<Task> {
                                 SizedBox(
                                     width: 120,
                                     child: Text(
-                                      widget.name,
+                                      widget.task.name,
                                       style: const TextStyle(
                                           fontSize: 18,
                                           overflow: TextOverflow.ellipsis),
                                     )),
-                                Difficulty(difficultyValue: widget.difficultyLevel)
+                                Difficulty(
+                                    difficultyValue: widget.task.difficultyLevel)
                               ],
                             ),
                             SizedBox(
@@ -103,7 +103,8 @@ class _TaskState extends State<Task> {
                               child: ElevatedButton(
                                   onPressed: incrementLevel,
                                   child: const Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
                                     children: [
                                       Icon(Icons.expand_less),
                                       Text("Lv. Up")
@@ -120,17 +121,26 @@ class _TaskState extends State<Task> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Text(
+                            "Level ${widget.level}",
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 18),
+                          ),
                           SizedBox(
                               width: 200,
                               child: LinearProgressIndicator(
                                 color: Colors.black26,
                                 value: getLevelScale(),
                               )),
-                          Text(
-                            "Level ${widget.level}",
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 18),
-                          ),
+                          InkWell(
+                              onTap: () async {
+                                await TaskDao().deleteOne(widget.task.id!);
+                                widget.onTaskDeleted();
+                              },
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              )),
                         ],
                       ),
                     )
